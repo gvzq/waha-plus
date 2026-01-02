@@ -1,7 +1,7 @@
 import type {
   LabelAssociation,
   LabelAssociationType,
-} from '@adiwajshing/baileys/lib/Types/LabelAssociation';
+} from 'baileys/lib/Types/LabelAssociation';
 
 export interface ILabelAssociationRepository {
   deleteOne(association: LabelAssociation): Promise<void>;

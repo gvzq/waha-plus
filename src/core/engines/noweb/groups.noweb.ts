@@ -1,9 +1,9 @@
-import type { GroupMetadata } from '@adiwajshing/baileys';
-import type { Contact } from '@adiwajshing/baileys/lib/Types/Contact';
+import type { GroupMetadata } from 'baileys';
+import type { Contact } from 'baileys/lib/Types/Contact';
 import type {
   GroupParticipant as NOWEBGroupParticipant,
   ParticipantAction,
-} from '@adiwajshing/baileys/lib/Types/GroupMetadata';
+} from 'baileys/lib/Types/GroupMetadata';
 import { getGroupInviteLink } from '@waha/core/abc/session.abc';
 import {
   GroupInfo,

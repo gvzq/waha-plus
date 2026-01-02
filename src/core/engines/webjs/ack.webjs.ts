@@ -1,5 +1,5 @@
-import type { proto } from '@adiwajshing/baileys';
-import type { BinaryNode } from '@adiwajshing/baileys';
+import type { proto } from 'baileys';
+import type { BinaryNode } from 'baileys';
 import { isJidGroup, isJidStatusBroadcast } from '@waha/core/utils/jids';
 import esm from '@waha/vendor/esm';
 

@@ -1,4 +1,4 @@
-import type { proto } from '@adiwajshing/baileys';
+import type { proto } from 'baileys';
 import { WAMessage } from '@waha/structures/responses.dto';
 import { SimpleVCardInfo } from '@waha/core/vcard';
 import { CallData } from '@waha/structures/calls.dto';

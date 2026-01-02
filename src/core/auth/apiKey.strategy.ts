@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { PassportStrategy } from '@nestjs/passport';
 import { IApiKeyAuth } from '@waha/core/auth/auth';
+// @ts-ignore - passport-headerapikey types may not be available
 import { HeaderAPIKeyStrategy } from 'passport-headerapikey';
 
 @Injectable()

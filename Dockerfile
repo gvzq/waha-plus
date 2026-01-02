@@ -13,18 +13,17 @@ RUN apt-get update && apt-get install -y git python3 build-essential && rm -rf /
 # npm packages
 WORKDIR /git
 COPY package.json .
-COPY yarn.lock .
-ENV YARN_CHECKSUM_BEHAVIOR=update
+COPY pnpm-lock.yaml .
 
 RUN npm install -g corepack && corepack enable
-RUN yarn set version 4.9.2
-RUN yarn install
+RUN corepack prepare pnpm@9.15.0 --activate
+RUN pnpm install --frozen-lockfile --shamefully-hoist
 
 # App
 WORKDIR /git
 ADD . /git
-RUN yarn install
-RUN yarn build && find ./dist -name "*.d.ts" -delete
+RUN pnpm install --frozen-lockfile --shamefully-hoist
+RUN pnpm build && find ./dist -name "*.d.ts" -delete
 
 #
 # Dashboard
@@ -208,7 +207,13 @@ ENV WHATSAPP_DEFAULT_ENGINE=$WHATSAPP_DEFAULT_ENGINE
 # Attach sources, install packages
 WORKDIR /app
 COPY package.json ./
-COPY --from=build /git/node_modules ./node_modules
+COPY pnpm-lock.yaml ./
+
+# Install dependencies with pnpm (using shamefully-hoist for Docker compatibility)
+RUN npm install -g corepack && corepack enable
+RUN corepack prepare pnpm@9.15.0 --activate
+RUN pnpm install --frozen-lockfile --shamefully-hoist
+
 COPY --from=build /git/dist ./dist
 COPY --from=dashboard /dashboard ./dist/dashboard
 COPY --from=gows /go/gows/bin/gows /app/gows

@@ -7,6 +7,14 @@ import {
 } from '@waha/core/media/IMediaStorage';
 import { WAMedia } from '@waha/structures/media.dto';
 import { Logger } from 'pino';
+import {
+  IMediaConverter,
+  CoreMediaConverter,
+  ImageOptimizationOptions,
+  VideoOptimizationOptions,
+  BatchMediaProcessingOptions,
+  MediaProcessingResult
+} from './IConverter';
 
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const mime = require('mime-types');
@@ -21,11 +29,14 @@ export class MediaManager implements IMediaManager {
     maxTimeout: 500,
   };
 
+  private converter: IMediaConverter;
+
   constructor(
     private storage: IMediaStorage,
     private mimetypes: string[],
     protected log: Logger,
   ) {
+    this.converter = new CoreMediaConverter();
     // Log mimetypes
     if (this.mimetypes && this.mimetypes.length > 0) {
       const mimetypes = this.mimetypes.join(',');
@@ -170,6 +181,76 @@ export class MediaManager implements IMediaManager {
     mediaData: MediaData,
   ): Promise<MediaStorageData> {
     return await this.storage.getStorageData(mediaData);
+  }
+
+  // Advanced media processing methods
+  async optimizeImageForSending(
+    content: Buffer,
+    options: ImageOptimizationOptions = {}
+  ): Promise<Buffer> {
+    this.log.info('Optimizing image for sending...');
+    try {
+      const optimized = await this.converter.optimizeImage(content, {
+        maxWidth: 1920,
+        maxHeight: 1080,
+        quality: 85,
+        format: 'jpeg',
+        ...options
+      });
+      this.log.info(`Image optimized: ${content.length} -> ${optimized.length} bytes`);
+      return optimized;
+    } catch (error) {
+      this.log.warn('Image optimization failed, using original: %s', error?.message || error);
+      return content;
+    }
+  }
+
+  async optimizeVideoForSending(
+    content: Buffer,
+    options: VideoOptimizationOptions = {}
+  ): Promise<Buffer> {
+    this.log.info('Optimizing video for sending...');
+    try {
+      const optimized = await this.converter.optimizeVideo(content, {
+        maxWidth: 1280,
+        maxHeight: 720,
+        bitrate: '1M',
+        preset: 'fast',
+        ...options
+      });
+      this.log.info(`Video optimized: ${content.length} -> ${optimized.length} bytes`);
+      return optimized;
+    } catch (error) {
+      this.log.warn('Video optimization failed, using original: %s', error?.message || error);
+      return content;
+    }
+  }
+
+  async convertVoiceForSending(content: Buffer): Promise<Buffer> {
+    this.log.info('Converting voice for sending...');
+    try {
+      const converted = await this.converter.voice(content);
+      this.log.info(`Voice converted: ${content.length} -> ${converted.length} bytes`);
+      return converted;
+    } catch (error) {
+      this.log.warn('Voice conversion failed, using original: %s', error?.message || error);
+      return content;
+    }
+  }
+
+  async processMediaBatch<T>(
+    items: T[],
+    processor: (item: T) => Promise<Buffer>,
+    options: BatchMediaProcessingOptions = {}
+  ): Promise<MediaProcessingResult<Buffer>[]> {
+    this.log.info(`Processing batch of ${items.length} media items...`);
+    return await this.converter.processBatch(items, processor, {
+      concurrency: 2,
+      retryAttempts: 3,
+      retryDelay: 1000,
+      timeout: 60000,
+      ...options
+    });
   }
 
   private async exists(mediaData: MediaData): Promise<boolean> {

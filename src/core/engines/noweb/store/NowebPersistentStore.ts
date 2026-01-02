@@ -1,4 +1,4 @@
-import type makeWASocket from '@adiwajshing/baileys';
+import type makeWASocket from 'baileys';
 import type {
   BaileysEventEmitter,
   Chat,
@@ -7,10 +7,10 @@ import type {
   Contact,
   ParticipantAction,
   WAMessage,
-} from '@adiwajshing/baileys';
-import type { GroupMetadata } from '@adiwajshing/baileys/lib/Types/GroupMetadata';
-import type { Label } from '@adiwajshing/baileys/lib/Types/Label';
-import type { LabelAssociation } from '@adiwajshing/baileys/lib/Types/LabelAssociation';
+} from 'baileys';
+import type { GroupMetadata } from 'baileys/lib/Types/GroupMetadata';
+import type { Label } from 'baileys/lib/Types/Label';
+import type { LabelAssociation } from 'baileys/lib/Types/LabelAssociation';
 import { IGroupRepository } from '@waha/core/engines/noweb/store/IGroupRepository';
 import { ILabelAssociationRepository } from '@waha/core/engines/noweb/store/ILabelAssociationsRepository';
 import { ILabelsRepository } from '@waha/core/engines/noweb/store/ILabelsRepository';

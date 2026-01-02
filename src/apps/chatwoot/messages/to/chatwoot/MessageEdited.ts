@@ -3,7 +3,7 @@ import { Locale } from '@waha/apps/chatwoot/i18n/locale';
 import { TKey } from '@waha/apps/chatwoot/i18n/templates';
 import { MessageToChatWootConverter } from '@waha/apps/chatwoot/messages/to/chatwoot';
 import { WAMessage } from '@waha/structures/responses.dto';
-import type { proto } from '@adiwajshing/baileys';
+import type { proto } from 'baileys';
 import { WhatsappToMarkdown } from '@waha/apps/chatwoot/messages/to/chatwoot/utils/markdown';
 
 export class MessageEdited implements MessageToChatWootConverter {

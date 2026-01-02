@@ -2,7 +2,7 @@ import {
   normalizeMessageContent,
   proto,
   WAMessageKey,
-} from '@adiwajshing/baileys';
+} from 'baileys';
 import * as grpc from '@grpc/grpc-js';
 import { connectivityState } from '@grpc/grpc-js';
 import { UnprocessableEntityException } from '@nestjs/common';

@@ -1,4 +1,4 @@
-import type { proto } from '@adiwajshing/baileys';
+import type { proto } from 'baileys';
 import esm from '@waha/vendor/esm';
 
 export function extractMediaContent(

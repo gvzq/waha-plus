@@ -101,6 +101,7 @@ export const IMPORTS_CORE = [
   }),
   ConfigModule.forRoot({
     isGlobal: true,
+    envFilePath: ['.env'],
     validationSchema: Joi.object({
       WHATSAPP_API_SCHEMA: Joi.string().valid('http', 'https').default('http'),
     }),
