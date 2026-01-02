@@ -3,7 +3,7 @@ import { TKey } from '@waha/apps/chatwoot/i18n/templates';
 import { ChatWootMessagePartial } from '@waha/apps/chatwoot/consumers/waha/base';
 import { isEmptyString } from './utils/text';
 import * as lodash from 'lodash';
-import type { proto } from '@adiwajshing/baileys';
+import type { proto } from 'baileys';
 import { WAMessage } from '@waha/structures/responses.dto';
 import { MessageToChatWootConverter } from '@waha/apps/chatwoot/messages/to/chatwoot';
 

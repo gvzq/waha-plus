@@ -1,4 +1,4 @@
-import type { WAMessageKey } from '@adiwajshing/baileys';
+import type { WAMessageKey } from 'baileys';
 import { parseMessageIdSerialized } from '@waha/core/utils/ids';
 import { isJidGroup, toJID } from '@waha/core/utils/jids';
 import {

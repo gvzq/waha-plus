@@ -1,4 +1,4 @@
-import type { WAMessageKey } from '@adiwajshing/baileys';
+import type { WAMessageKey } from 'baileys';
 import { ensureSuffix } from '@waha/core/abc/session.abc';
 
 export function isJidNewsletter(jid: string) {

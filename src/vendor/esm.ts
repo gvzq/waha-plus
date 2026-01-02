@@ -5,14 +5,14 @@
  * Centralized dynamic loader for ESM-only Baileys from CommonJS/TS code
  */
 
-type Baileys = typeof import('@adiwajshing/baileys');
+type Baileys = typeof import('baileys');
 
 const esm: { b: Baileys } = {
   b: null,
 };
 
 const modules = {
-  b: '@adiwajshing/baileys',
+  b: 'baileys',
 };
 
 async function loadESMModules(): Promise<void> {

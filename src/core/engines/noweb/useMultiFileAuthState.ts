@@ -1,7 +1,7 @@
 import type {
   AuthenticationCreds,
   AuthenticationState,
-} from '@adiwajshing/baileys';
+} from 'baileys';
 import { mkdir, readFile, stat, unlink } from 'fs/promises';
 import { join } from 'path';
 import esm from '@waha/vendor/esm';

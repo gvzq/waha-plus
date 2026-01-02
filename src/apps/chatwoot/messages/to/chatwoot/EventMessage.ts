@@ -4,7 +4,7 @@ import { TKey } from '@waha/apps/chatwoot/i18n/templates';
 import { MessageToChatWootConverter } from '@waha/apps/chatwoot/messages/to/chatwoot';
 import { isEmptyString } from '@waha/apps/chatwoot/messages/to/chatwoot/utils/text';
 import { WhatsappToMarkdown } from '@waha/apps/chatwoot/messages/to/chatwoot/utils/markdown';
-import type { proto } from '@adiwajshing/baileys';
+import type { proto } from 'baileys';
 import { WAMessage } from '@waha/structures/responses.dto';
 
 export class EventMessage implements MessageToChatWootConverter {
@@ -21,8 +21,8 @@ export class EventMessage implements MessageToChatWootConverter {
 
     const formattedEventMessage = {
       ...eventMessage,
-      startTime: this.l.FormatTimestamp(eventMessage.startTime),
-      endTime: this.l.FormatTimestamp(eventMessage.endTime),
+      startTime: this.l.FormatTimestamp(Number(eventMessage.startTime)),
+      endTime: this.l.FormatTimestamp(Number(eventMessage.endTime)),
     };
 
     const content = this.l.key(TKey.WA_TO_CW_MESSAGE_EVENT).r({

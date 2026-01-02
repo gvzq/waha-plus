@@ -1,4 +1,4 @@
-import type { Contact } from '@adiwajshing/baileys';
+import type { Contact } from 'baileys';
 import { PaginationParams } from '@waha/structures/pagination.dto';
 
 export interface IContactRepository {

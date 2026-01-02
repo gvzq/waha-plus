@@ -3,9 +3,9 @@ import type {
   Chat,
   Contact,
   proto,
-} from '@adiwajshing/baileys';
-import type { GroupMetadata } from '@adiwajshing/baileys/lib/Types/GroupMetadata';
-import type { Label } from '@adiwajshing/baileys/lib/Types/Label';
+} from 'baileys';
+import type { GroupMetadata } from 'baileys/lib/Types/GroupMetadata';
+import type { Label } from 'baileys/lib/Types/Label';
 import {
   GetChatMessagesFilter,
   OverviewFilter,

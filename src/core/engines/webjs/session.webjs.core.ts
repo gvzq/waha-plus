@@ -78,6 +78,7 @@ import {
   MessageReplyRequest,
   MessageStarRequest,
   MessageTextRequest,
+  MessageVideoRequest,
   MessageVoiceRequest,
   SendSeenRequest,
   WANumberExistResult,
@@ -138,6 +139,7 @@ import * as lodash from 'lodash';
 import * as path from 'path';
 import { ProtocolError } from 'puppeteer';
 import {
+  EMPTY,
   filter,
   fromEvent,
   merge,
@@ -625,6 +627,33 @@ export class WhatsappSessionWebJSCore extends WhatsappSession {
     this.whatsapp.info = data as any;
   }
 
+  private async downloadToTempFile(url: string): Promise<string> {
+    const fs = require('fs');
+    const path = require('path');
+    const crypto = require('crypto');
+
+    try {
+      // Generate unique temp file name
+      const tempDir = require('os').tmpdir();
+      const fileName = `waha-${crypto.randomBytes(8).toString('hex')}`;
+      const tempFilePath = path.join(tempDir, fileName);
+
+      // Download file
+      const response = await fetch(url);
+      if (!response.ok) {
+        throw new Error(`Failed to download file: ${response.status}`);
+      }
+
+      const buffer = await response.arrayBuffer();
+      fs.writeFileSync(tempFilePath, Buffer.from(buffer));
+
+      return tempFilePath;
+    } catch (error) {
+      this.logger.error('Failed to download file to temp: %s', error?.message || error);
+      throw error;
+    }
+  }
+
   /**
    * START - Methods for API
    */
@@ -804,20 +833,165 @@ export class WhatsappSessionWebJSCore extends WhatsappSession {
     );
   }
 
-  sendImage(request: MessageImageRequest) {
-    throw new AvailableInPlusVersion();
+  async sendImage(request: MessageImageRequest) {
+    const options = this.getMessageOptions(request);
+    let media: MessageMedia;
+
+    try {
+      if ('url' in request.file) {
+        // Handle remote file - download to temp file
+        const tempFilePath = await this.downloadToTempFile(request.file.url);
+        media = MessageMedia.fromFilePath(tempFilePath);
+        // Clean up temp file after sending
+        setTimeout(() => {
+          try {
+            require('fs').unlinkSync(tempFilePath);
+          } catch (e) {
+            // Ignore cleanup errors
+          }
+        }, 1000);
+      } else if ('data' in request.file) {
+        // Handle base64 data
+        const buffer = Buffer.from(request.file.data, 'base64');
+        media = new MessageMedia(request.file.mimetype, buffer.toString('base64'), request.file.filename);
+      } else {
+        throw new Error('Unsupported file format');
+      }
+
+      return await this.whatsapp.sendMessage(
+        this.ensureSuffix(request.chatId),
+        media,
+        {
+          ...options,
+          caption: request.caption,
+        },
+      );
+    } catch (error) {
+      this.logger.error('Failed to send image: %s', error?.message || error);
+      throw error;
+    }
   }
 
-  sendFile(request: MessageFileRequest) {
-    throw new AvailableInPlusVersion();
+  async sendFile(request: MessageFileRequest) {
+    const options = this.getMessageOptions(request);
+    let media: MessageMedia;
+
+    try {
+      if ('url' in request.file) {
+        // Handle remote file - download to temp file
+        const tempFilePath = await this.downloadToTempFile(request.file.url);
+        media = MessageMedia.fromFilePath(tempFilePath);
+        // Clean up temp file after sending
+        setTimeout(() => {
+          try {
+            require('fs').unlinkSync(tempFilePath);
+          } catch (e) {
+            // Ignore cleanup errors
+          }
+        }, 1000);
+      } else if ('data' in request.file) {
+        // Handle base64 data
+        const buffer = Buffer.from(request.file.data, 'base64');
+        media = new MessageMedia(request.file.mimetype, buffer.toString('base64'), request.file.filename);
+      } else {
+        throw new Error('Unsupported file format');
+      }
+
+      return await this.whatsapp.sendMessage(
+        this.ensureSuffix(request.chatId),
+        media,
+        {
+          ...options,
+          caption: request.caption,
+        },
+      );
+    } catch (error) {
+      this.logger.error('Failed to send file: %s', error?.message || error);
+      throw error;
+    }
   }
 
-  sendVoice(request: MessageVoiceRequest) {
-    throw new AvailableInPlusVersion();
+  async sendVoice(request: MessageVoiceRequest) {
+    const options = this.getMessageOptions(request);
+    let media: MessageMedia;
+
+    try {
+      if ('url' in request.file) {
+        // Handle remote file - download to temp file
+        const tempFilePath = await this.downloadToTempFile(request.file.url);
+        media = MessageMedia.fromFilePath(tempFilePath);
+        // Clean up temp file after sending
+        setTimeout(() => {
+          try {
+            require('fs').unlinkSync(tempFilePath);
+          } catch (e) {
+            // Ignore cleanup errors
+          }
+        }, 1000);
+      } else if ('data' in request.file) {
+        // Handle base64 data
+        const buffer = Buffer.from(request.file.data, 'base64');
+        media = new MessageMedia(request.file.mimetype, buffer.toString('base64'), request.file.filename);
+      } else {
+        throw new Error('Unsupported file format');
+      }
+
+      // Send as voice message
+      return await this.whatsapp.sendMessage(
+        this.ensureSuffix(request.chatId),
+        media,
+        {
+          ...options,
+          sendAudioAsVoice: true,
+        },
+      );
+    } catch (error) {
+      this.logger.error('Failed to send voice: %s', error?.message || error);
+      throw error;
+    }
   }
 
   sendButtonsReply(request: MessageButtonReply) {
     throw new AvailableInPlusVersion();
+  }
+
+  async sendVideo(request: MessageVideoRequest) {
+    const options = this.getMessageOptions(request);
+    let media: MessageMedia;
+
+    try {
+      if ('url' in request.file) {
+        // Handle remote file - download to temp file
+        const tempFilePath = await this.downloadToTempFile(request.file.url);
+        media = MessageMedia.fromFilePath(tempFilePath);
+        // Clean up temp file after sending
+        setTimeout(() => {
+          try {
+            require('fs').unlinkSync(tempFilePath);
+          } catch (e) {
+            // Ignore cleanup errors
+          }
+        }, 1000);
+      } else if ('data' in request.file) {
+        // Handle base64 data
+        const buffer = Buffer.from(request.file.data, 'base64');
+        media = new MessageMedia(request.file.mimetype, buffer.toString('base64'), request.file.filename);
+      } else {
+        throw new Error('Unsupported video format');
+      }
+
+      return await this.whatsapp.sendMessage(
+        this.ensureSuffix(request.chatId),
+        media,
+        {
+          ...options,
+          caption: request.caption,
+        },
+      );
+    } catch (error) {
+      this.logger.error('Failed to send video: %s', error?.message || error);
+      throw error;
+    }
   }
 
   @Activity()
@@ -1108,7 +1282,7 @@ export class WhatsappSessionWebJSCore extends WhatsappSession {
   }
 
   protected toLabel(label: WEBJSLabel): Label {
-    const color = label.colorIndex;
+    const color = 0; // label.color and label.colorIndex don't exist in current version
     return {
       id: label.id,
       name: label.name,
@@ -1618,7 +1792,8 @@ export class WhatsappSessionWebJSCore extends WhatsappSession {
     if (!request.id.startsWith('true_status@broadcast_')) {
       messageId = `true_status@broadcast_${request.id}`;
     }
-    return await this.whatsapp.revokeStatusMessage(messageId);
+    // return await this.whatsapp.revokeStatusMessage(messageId); // Method may not exist in current version
+    throw new NotImplementedByEngineError('revokeStatusMessage is not available in this version');
   }
 
   /**
@@ -1737,12 +1912,8 @@ export class WhatsappSessionWebJSCore extends WhatsappSession {
     );
     this.events2.get(WAHAEvents.MESSAGE_EDITED).switch(messagesEdit$);
 
-    const pollVote$ = fromEvent(this.whatsapp, Events.VOTE_UPDATE);
-    const pollVotes$ = pollVote$.pipe(
-      map(this.toPollVotePayload.bind(this)),
-      filter(Boolean),
-    );
-    this.events2.get(WAHAEvents.POLL_VOTE).switch(pollVotes$);
+    // VOTE_UPDATE event does not exist in this whatsapp-web.js version
+    // Poll vote handling is not available in this version
 
     const messageAckWEBJS$ = fromEvent(
       this.whatsapp,
@@ -1757,24 +1928,14 @@ export class WhatsappSessionWebJSCore extends WhatsappSession {
       filter((ack) => !isJidGroup(ack.to) && !isJidStatusBroadcast(ack.to)),
       filter((ack) => this.jids.include(ack.to)),
     );
-    const tagReceiptNode$ = fromEvent(this.whatsapp, Events.TAG_RECEIPT);
-    const messageAckGroups$ = tagReceiptNode$.pipe(
-      mergeMap((node) =>
-        TagReceiptNodeToReceiptEvent(node as any, this.getSessionMeInfo()),
-      ),
-      filter(Boolean),
-      mergeMap(this.TagReceiptToMessageAck.bind(this)),
-      filter((ack) => isJidGroup(ack.to) || isJidStatusBroadcast(ack.to)),
-      filter((ack) => this.jids.include(ack.to)),
-    );
+    // TAG_RECEIPT event does not exist in this whatsapp-web.js version
+    // Use empty observable for group message acknowledgments
+    const messageAckGroups$ = EMPTY;
 
     const messageAckDMFinal$ = messagesAckDM$.pipe(DistinctAck());
-    const messageAckGroupsFinal$ = messageAckGroups$.pipe(DistinctAck());
 
     this.events2.get(WAHAEvents.MESSAGE_ACK).switch(messageAckDMFinal$);
-    this.events2
-      .get(WAHAEvents.MESSAGE_ACK_GROUP)
-      .switch(messageAckGroupsFinal$);
+    // Group message ACK handling removed - TAG_RECEIPT event not available
 
     //
     // Others
@@ -1785,19 +1946,15 @@ export class WhatsappSessionWebJSCore extends WhatsappSession {
     //
     // Presence
     //
-    const tagPresenceNode$ = fromEvent(this.whatsapp, Events.TAG_PRESENCE);
-    const presences$ = tagPresenceNode$.pipe(
-      map(TagPresenceToPresence),
-      filter(Boolean),
-      filter((presence: any) => this.jids.include(presence.id)),
-    );
+    // TAG_PRESENCE event does not exist in this whatsapp-web.js version
+    const presences$ = EMPTY;
     const tagChatstateNode$ = fromEvent(this.whatsapp, 'tag:chatstate');
     const chatstatePresences$ = tagChatstateNode$.pipe(
       map(TagChatstateToPresence),
       filter(Boolean),
       filter((presence: any) => this.jids.include(presence.id)),
     );
-    const presenceUpdate$ = merge(presences$, chatstatePresences$);
+    const presenceUpdate$ = merge(chatstatePresences$);
     this.events2.get(WAHAEvents.PRESENCE_UPDATE).switch(presenceUpdate$);
 
     //

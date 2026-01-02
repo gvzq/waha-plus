@@ -1,5 +1,5 @@
 import * as lodash from 'lodash';
-import type { proto } from '@adiwajshing/baileys';
+import type { proto } from 'baileys';
 
 export function camelCaseKeysDeep<T = any>(input: unknown): T {
   if (Array.isArray(input)) return input.map(camelCaseKeysDeep) as unknown as T;

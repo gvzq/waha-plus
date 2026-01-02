@@ -5,7 +5,7 @@ import { Locale } from '@waha/apps/chatwoot/i18n/locale';
 import { TKey } from '@waha/apps/chatwoot/i18n/templates';
 import { parseVCardV3, SimpleVCardInfo } from '@waha/core/vcard';
 import * as lodash from 'lodash';
-import type { proto } from '@adiwajshing/baileys';
+import type { proto } from 'baileys';
 import { WAMessage } from '@waha/structures/responses.dto';
 import { MessageToChatWootConverter } from '@waha/apps/chatwoot/messages/to/chatwoot';
 

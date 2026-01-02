@@ -9,7 +9,7 @@ import {
 import { MessageToChatWootConverter } from '@waha/apps/chatwoot/messages/to/chatwoot';
 import { WhatsappToMarkdown } from '@waha/apps/chatwoot/messages/to/chatwoot/utils/markdown';
 import { WAMessage } from '@waha/structures/responses.dto';
-import type { proto } from '@adiwajshing/baileys';
+import type { proto } from 'baileys';
 import * as lodash from 'lodash';
 
 import { fetchBuffer } from '@waha/utils/fetch';

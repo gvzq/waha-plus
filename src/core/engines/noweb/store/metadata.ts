@@ -1,5 +1,5 @@
-import type { WAMessage } from '@adiwajshing/baileys';
-import type { LabelAssociation } from '@adiwajshing/baileys/lib/Types/LabelAssociation';
+import type { WAMessage } from 'baileys';
+import type { LabelAssociation } from 'baileys/lib/Types/LabelAssociation';
 
 export const NowebMessagesMetadata = new Map()
   .set('jid', (msg: WAMessage) => msg.key.remoteJid)

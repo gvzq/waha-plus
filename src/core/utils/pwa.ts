@@ -2,7 +2,7 @@
  * Proto WhatsApp Utils
  */
 
-import { normalizeMessageContent, proto } from '@adiwajshing/baileys';
+import { normalizeMessageContent, proto } from 'baileys';
 
 export function IsEditedMessage(message: proto.IMessage): boolean {
   message = normalizeMessageContent(message);

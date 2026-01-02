@@ -6,7 +6,7 @@ import { MessageToChatWootConverter } from '@waha/apps/chatwoot/messages/to/chat
 import { isEmptyString } from '@waha/apps/chatwoot/messages/to/chatwoot/utils/text';
 import { WhatsappToMarkdown } from '@waha/apps/chatwoot/messages/to/chatwoot/utils/markdown';
 import * as lodash from 'lodash';
-import type { proto } from '@adiwajshing/baileys';
+import type { proto } from 'baileys';
 import { WAMessage } from '@waha/structures/responses.dto';
 
 export class PixMessage implements MessageToChatWootConverter {

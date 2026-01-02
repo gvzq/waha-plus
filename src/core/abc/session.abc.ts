@@ -142,10 +142,29 @@ const qrcode = require('qrcode-terminal');
 
 axiosRetry(axios, { retries: 3 });
 
+// Browser paths for different platforms
+const MAC_CHROME_PATH = '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome';
+const MAC_CHROMIUM_PATH = '/Applications/Chromium.app/Contents/MacOS/Chromium';
+const HOMEBREW_CHROMIUM_PATH = '/opt/homebrew/bin/chromium';
+const USR_LOCAL_CHROMIUM_PATH = '/usr/local/bin/chromium';
 const CHROME_PATH = '/usr/bin/google-chrome-stable';
 const CHROMIUM_PATH = '/usr/bin/chromium';
 
 export function getBrowserExecutablePath() {
+  // Check macOS paths first
+  if (fs.existsSync(MAC_CHROME_PATH)) {
+    return MAC_CHROME_PATH;
+  }
+  if (fs.existsSync(MAC_CHROMIUM_PATH)) {
+    return MAC_CHROMIUM_PATH;
+  }
+  if (fs.existsSync(HOMEBREW_CHROMIUM_PATH)) {
+    return HOMEBREW_CHROMIUM_PATH;
+  }
+  if (fs.existsSync(USR_LOCAL_CHROMIUM_PATH)) {
+    return USR_LOCAL_CHROMIUM_PATH;
+  }
+  // Fallback to Linux paths
   if (fs.existsSync(CHROME_PATH)) {
     return CHROME_PATH;
   }
@@ -615,7 +634,7 @@ export abstract class WhatsappSession {
         await this.setPresence(WAHAPresenceStatus.ONLINE);
         this.logger.debug('Set presence to ONLINE due to activity');
       } catch (error) {
-        this.logger.debug('Failed to set presence ONLINE', error);
+        this.logger.debug('Failed to set presence ONLINE: %s', error?.message || error);
         return;
       }
     }
@@ -637,7 +656,7 @@ export abstract class WhatsappSession {
         );
       } catch (error) {
         this.presence = WAHAPresenceStatus.OFFLINE;
-        this.logger.debug('Failed to set presence OFFLINE', error);
+        this.logger.debug('Failed to set presence OFFLINE: %s', error?.message || error);
       }
       this.cleanupPresenceTimeout();
     }, this.presenceAutoOnlineConfig.duration);

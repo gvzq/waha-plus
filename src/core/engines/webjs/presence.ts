@@ -1,4 +1,4 @@
-import type { BinaryNode, WAPresence } from '@adiwajshing/baileys';
+import type { BinaryNode, WAPresence } from 'baileys';
 import { WAHAPresenceStatus } from '@waha/structures/enums.dto';
 import { WAHAChatPresences } from '@waha/structures/presence.dto';
 

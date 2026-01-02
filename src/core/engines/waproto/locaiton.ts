@@ -1,4 +1,4 @@
-import type { proto } from '@adiwajshing/baileys';
+import type { proto } from 'baileys';
 import { WALocation } from '@waha/structures/responses.dto';
 import * as lodash from 'lodash';
 import { ensureBase64 } from '@waha/utils/bytes';

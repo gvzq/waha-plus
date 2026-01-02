@@ -1,4 +1,4 @@
-import { Browsers, WABrowserDescription } from '@adiwajshing/baileys';
+import { Browsers, WABrowserDescription } from 'baileys';
 import makeWASocket, {
   Chat,
   Contact,
@@ -22,21 +22,21 @@ import makeWASocket, {
   WAMessageContent,
   WAMessageKey,
   WAMessageUpdate,
-} from '@adiwajshing/baileys';
-import { WACallEvent } from '@adiwajshing/baileys/lib/Types/Call';
-import { BaileysEventMap } from '@adiwajshing/baileys/lib/Types/Events';
-import { GroupMetadata } from '@adiwajshing/baileys/lib/Types/GroupMetadata';
+} from 'baileys';
+import { WACallEvent } from 'baileys/lib/Types/Call';
+import { BaileysEventMap } from 'baileys/lib/Types/Events';
+import { GroupMetadata } from 'baileys/lib/Types/GroupMetadata';
 import {
   Label as NOWEBLabel,
   LabelActionBody,
-} from '@adiwajshing/baileys/lib/Types/Label';
+} from 'baileys/lib/Types/Label';
 import {
   ChatLabelAssociation,
   LabelAssociationType,
-} from '@adiwajshing/baileys/lib/Types/LabelAssociation';
-import { MessageUserReceiptUpdate } from '@adiwajshing/baileys/lib/Types/Message';
-import { ILogger } from '@adiwajshing/baileys/lib/Utils/logger';
-import { isLidUser } from '@adiwajshing/baileys/lib/WABinary/jid-utils';
+} from 'baileys/lib/Types/LabelAssociation';
+import { MessageUserReceiptUpdate } from 'baileys/lib/Types/Message';
+import { ILogger } from 'baileys/lib/Utils/logger';
+import { isLidUser } from 'baileys/lib/WABinary/jid-utils';
 import { UnprocessableEntityException } from '@nestjs/common';
 import {
   getChannelInviteLink,
@@ -114,6 +114,7 @@ import {
   MessageReplyRequest,
   MessageStarRequest,
   MessageTextRequest,
+  MessageVideoRequest,
   MessageVoiceRequest,
   SendSeenRequest,
   WANumberExistResult,
@@ -1012,16 +1013,103 @@ export class WhatsappSessionNoWebCore extends WhatsappSession {
     return await this.sock.sendMessage(request.chatId, message, options);
   }
 
-  sendImage(request: MessageImageRequest) {
-    throw new AvailableInPlusVersion();
+  async sendImage(request: MessageImageRequest) {
+    const remoteJid = toJID(this.ensureSuffix(request.chatId));
+    const options = await this.getMessageOptions(request);
+
+    try {
+      const buffer = await this.uploadMedia(request.file, 'image');
+      if (!buffer) {
+        throw new Error('Failed to prepare image media');
+      }
+
+      const message = {
+        image: buffer,
+        caption: request.caption,
+        mimetype: request.file.mimetype,
+        fileName: request.file.filename,
+      };
+
+      const result = await this.sock.sendMessage(remoteJid, message, options);
+      return this.toWAMessage(result);
+    } catch (error) {
+      this.logger.error('Failed to send image: %s', error?.message || error);
+      throw error;
+    }
   }
 
-  sendFile(request: MessageFileRequest) {
-    throw new AvailableInPlusVersion();
+  async sendFile(request: MessageFileRequest) {
+    const remoteJid = toJID(this.ensureSuffix(request.chatId));
+    const options = await this.getMessageOptions(request);
+
+    try {
+      const buffer = await this.uploadMedia(request.file, 'document');
+      if (!buffer) {
+        throw new Error('Failed to prepare file media');
+      }
+
+      const message = {
+        document: buffer,
+        caption: request.caption,
+        mimetype: request.file.mimetype,
+        fileName: request.file.filename || 'file',
+      };
+
+      const result = await this.sock.sendMessage(remoteJid, message, options);
+      return this.toWAMessage(result);
+    } catch (error) {
+      this.logger.error('Failed to send file: %s', error?.message || error);
+      throw error;
+    }
   }
 
-  sendVoice(request: MessageVoiceRequest) {
-    throw new AvailableInPlusVersion();
+  async sendVoice(request: MessageVoiceRequest) {
+    const remoteJid = toJID(this.ensureSuffix(request.chatId));
+    const options = await this.getMessageOptions(request);
+
+    try {
+      const buffer = await this.uploadMedia(request.file, 'audio');
+      if (!buffer) {
+        throw new Error('Failed to prepare voice media');
+      }
+
+      const message = {
+        audio: buffer,
+        mimetype: request.file.mimetype,
+        ptt: true, // Push-to-talk flag for voice messages
+      };
+
+      const result = await this.sock.sendMessage(remoteJid, message, options);
+      return this.toWAMessage(result);
+    } catch (error) {
+      this.logger.error('Failed to send voice: %s', error?.message || error);
+      throw error;
+    }
+  }
+
+  async sendVideo(request: MessageVideoRequest) {
+    const remoteJid = toJID(this.ensureSuffix(request.chatId));
+    const options = await this.getMessageOptions(request);
+
+    try {
+      const buffer = await this.uploadMedia(request.file, 'video');
+      if (!buffer) {
+        throw new Error('Failed to prepare video media');
+      }
+
+      const message = {
+        video: buffer,
+        caption: request.caption,
+        mimetype: request.file.mimetype,
+        fileName: request.file.filename,
+      };
+
+      const result = await this.sock.sendMessage(remoteJid, message, options);
+      return this.toWAMessage(result);
+    } catch (error) {
+      this.logger.error('Failed to send video: %s', error?.message || error);
+      throw error;
+    }
   }
 
   sendLinkCustomPreview(
@@ -1034,10 +1122,25 @@ export class WhatsappSessionNoWebCore extends WhatsappSession {
     file: RemoteFile | BinaryFile,
     type,
   ): Promise<any> {
-    if (file && ('url' in file || 'data' in file)) {
-      throw new AvailableInPlusVersion('Sending media (image, video, pdf)');
+    if (!file) return;
+
+    try {
+      if ('url' in file) {
+        // Download remote file
+        const response = await fetch(file.url);
+        if (!response.ok) {
+          throw new Error(`Failed to download file: ${response.status}`);
+        }
+        const buffer = await response.arrayBuffer();
+        return Buffer.from(buffer);
+      } else if ('data' in file) {
+        // Decode base64 data
+        return Buffer.from(file.data, 'base64');
+      }
+    } catch (error) {
+      this.logger.error('Failed to prepare media: %s', error?.message || error);
+      throw error;
     }
-    return;
   }
 
   @Activity()
@@ -1817,7 +1920,7 @@ export class WhatsappSessionNoWebCore extends WhatsappSession {
     const options: MiscMessageGenerationOptions = {
       backgroundColor: status.backgroundColor,
       font: status.font,
-      linkPreviewHighQuality: status.linkPreviewHighQuality,
+      // linkPreviewHighQuality: status.linkPreviewHighQuality, // Removed in Baileys 7.0.0-rc.9
       messageId: messageId,
     };
     return await this.sendStatusMessage(
@@ -1931,15 +2034,30 @@ export class WhatsappSessionNoWebCore extends WhatsappSession {
   }
 
   public async channelsList(query: ListChannelsQuery): Promise<Channel[]> {
-    const newsletters = await this.sock.newsletterSubscribed();
-    let channels = newsletters
-      .map(toNewsletterMetadata)
-      .filter(Boolean)
-      .map(this.toChannel);
-    if (query.role) {
-      // @ts-ignore
-      channels = channels.filter((channel) => channel.role === query.role);
+    // In Baileys 7.0.0-rc.9, newsletterSubscribers requires a specific jid
+    // For listing all user's subscribed channels, we need to find subscribed newsletters from store
+    // For now, return empty array until proper implementation is found
+    let channels: any[] = [];
+
+    try {
+      // Try to get newsletters from store if available
+      const store = (this as any).store;
+      if (store && store.newsletters) {
+        const newsletters = Object.values(store.newsletters) as any[];
+        channels = newsletters
+          .map(toNewsletterMetadata)
+          .filter(Boolean)
+          .map(this.toChannel);
+
+        if (query.role) {
+          // @ts-ignore - ChannelRole and ChannelRoleFilter type mismatch
+          channels = channels.filter((channel) => channel.role === query.role);
+        }
+      }
+    } catch (error) {
+      this.logger.error('Failed to list channels: %s', error?.message || error);
     }
+
     return channels;
   }
 

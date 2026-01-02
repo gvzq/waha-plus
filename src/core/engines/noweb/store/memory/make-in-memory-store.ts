@@ -10,13 +10,13 @@ import type {
   WAMessage,
   WAMessageCursor,
   WAMessageKey,
-} from '@adiwajshing/baileys/lib/Types';
-import type { Label } from '@adiwajshing/baileys/lib/Types/Label';
+} from 'baileys/lib/Types';
+import type { Label } from 'baileys/lib/Types/Label';
 import * as lodash from 'lodash';
 import type {
   LabelAssociation,
   MessageLabelAssociation,
-} from '@adiwajshing/baileys/lib/Types/LabelAssociation';
+} from 'baileys/lib/Types/LabelAssociation';
 import type { Comparable } from '@adiwajshing/keyed-db/lib/Types';
 import type { Logger } from 'pino';
 

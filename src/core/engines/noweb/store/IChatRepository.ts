@@ -1,4 +1,4 @@
-import type { Chat } from '@adiwajshing/baileys';
+import type { Chat } from 'baileys';
 import { OverviewFilter } from '@waha/structures/chats.dto';
 import { PaginationParams } from '@waha/structures/pagination.dto';
 

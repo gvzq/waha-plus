@@ -4,7 +4,7 @@ import { parseBool } from '@waha/helpers';
 import * as basicAuth from 'express-basic-auth';
 import { Auth } from '@waha/core/auth/config';
 
-export function BullAuthMiddleware() {
+export function BullAuthMiddleware(): any {
   let username = Auth.dashboard.username.value || '';
   let password = Auth.dashboard.password.value || '';
   if (process.env.WAHA_DASHBOARD_ENABLED) {

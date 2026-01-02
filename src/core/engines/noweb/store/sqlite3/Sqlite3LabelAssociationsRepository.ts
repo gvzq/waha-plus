@@ -1,7 +1,7 @@
 import type {
   LabelAssociation,
   LabelAssociationType,
-} from '@adiwajshing/baileys/lib/Types/LabelAssociation';
+} from 'baileys/lib/Types/LabelAssociation';
 import { ILabelAssociationRepository } from '@waha/core/engines/noweb/store/ILabelAssociationsRepository';
 import { NowebLabelAssociationsMetadata } from '@waha/core/engines/noweb/store/metadata';
 import { NowebLabelAssociationsSchema } from '@waha/core/engines/noweb/store/schemas';

@@ -28,17 +28,17 @@ const logger: Logger = pino({
 }).child({ name: 'Bootstrap' });
 
 process.on('uncaughtException', (err) => {
-  logger.error('Uncaught Exception:', err);
+  logger.error('Uncaught Exception: %s', err?.message || err);
   if (err instanceof Error) {
     logger.error(err.stack);
   }
 });
 process.on('unhandledRejection', (reason, promise) => {
-  logger.error('Unhandled Rejection at:', promise);
+  logger.error('Unhandled Rejection at: %s', promise);
   if (reason instanceof Error) {
     logger.error(reason.stack);
   } else {
-    logger.error('Unhandled rejection reason:', reason);
+    logger.error('Unhandled rejection reason: %s', reason);
   }
 });
 logger.info('NODE - Catching unhandled rejections and exceptions enabled');

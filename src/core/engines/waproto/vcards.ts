@@ -1,4 +1,4 @@
-import type { proto } from '@adiwajshing/baileys';
+import type { proto } from 'baileys';
 import * as lodash from 'lodash';
 
 export function extractVCards(waproto: proto.Message): string[] | null {
