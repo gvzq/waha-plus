@@ -255,6 +255,380 @@ curl -X POST "http://localhost:3000/api/sendImage" \
 ## What is next?
 [Go and read the full documentation!](https://waha.devlike.pro/docs/overview/introduction/)
 
+# Production Deployment with Dashboard
+
+## Dual-Service Architecture
+
+For production use, you can run a **dual-service setup** that combines:
+- **Your fork** (waha-plus) → Handles API with multimedia features
+- **Official WAHA** → Provides the polished dashboard UI
+- **Nginx** → Routes requests to the appropriate service
+
+This gives you Plus features for the API while using the official dashboard interface!
+
+### Architecture Overview
+
+```
+                    ┌─────────────────┐
+                    │ Nginx (Port 80) │
+                    └────────┬────────┘
+                             │
+            ┌────────────────┼────────────────┐
+            │                │                │
+        /api/*         /dashboard           /
+            │                │                │
+            ▼                ▼                ▼
+    ┌─────────────┐  ┌──────────────┐   Redirect to
+    │  waha-api   │  │ waha-dashboard│   /dashboard
+    │ (your fork) │  │ (official)    │
+    │ Port 3000   │  │ Port 3000     │
+    │ Plus API    │  │ UI Only       │
+    └─────┬───────┘  └───────────────┘
+          │
+          │ webhook calls
+          ▼
+    ┌─────────────┐
+    │  webhook    │
+    │ Port 3002   │
+    └─────────────┘
+```
+
+### Setup Instructions
+
+#### 1. Create Project Structure
+
+```bash
+mkdir waha-production
+cd waha-production
+
+# Clone your fork into the waha subdirectory
+git clone https://github.com/gvzq/waha-plus.git waha
+
+# Create required directories
+mkdir nginx
+```
+
+#### 2. Create Configuration Files
+
+**Create `nginx/nginx.conf`:**
+```nginx
+events {
+    worker_connections 1024;
+}
+
+http {
+    upstream waha_api {
+        server waha-api:3000;
+    }
+
+    upstream waha_dashboard {
+        server waha-dashboard:3000;
+    }
+
+    server {
+        listen 80;
+        server_name localhost;
+
+        client_max_body_size 50M;
+
+        # API routes → Your WAHA Plus fork
+        location /api/ {
+            proxy_pass http://waha_api;
+            proxy_set_header Host $host;
+            proxy_set_header X-Real-IP $remote_addr;
+            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+            proxy_set_header X-Forwarded-Proto $scheme;
+
+            # WebSocket support
+            proxy_http_version 1.1;
+            proxy_set_header Upgrade $http_upgrade;
+            proxy_set_header Connection "upgrade";
+
+            proxy_connect_timeout 60s;
+            proxy_send_timeout 60s;
+            proxy_read_timeout 60s;
+        }
+
+        # Swagger docs → Your WAHA Plus fork
+        location /swagger {
+            proxy_pass http://waha_api;
+            proxy_set_header Host $host;
+            proxy_set_header X-Real-IP $remote_addr;
+        }
+
+        # Health check → Your WAHA Plus fork
+        location /health {
+            proxy_pass http://waha_api;
+            proxy_set_header Host $host;
+        }
+
+        # WebSocket → Your WAHA Plus fork
+        location /ws {
+            proxy_pass http://waha_api;
+            proxy_http_version 1.1;
+            proxy_set_header Upgrade $http_upgrade;
+            proxy_set_header Connection "upgrade";
+            proxy_set_header Host $host;
+        }
+
+        # Dashboard → Official WAHA
+        location /dashboard {
+            proxy_pass http://waha_dashboard;
+            proxy_set_header Host $host;
+            proxy_set_header X-Real-IP $remote_addr;
+            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        }
+
+        # Root redirect
+        location = / {
+            return 302 /dashboard;
+        }
+    }
+}
+```
+
+**Create `waha/.env.docker`:**
+```env
+# Security
+WAHA_API_KEY=your-secret-api-key-here
+
+# Swagger credentials
+WHATSAPP_SWAGGER_USERNAME=admin
+WHATSAPP_SWAGGER_PASSWORD=your-swagger-password
+
+# Disable dashboard in API service (dashboard runs separately)
+WAHA_DASHBOARD_ENABLED=false
+WHATSAPP_SWAGGER_ENABLED=true
+
+# Engine (WEBJS or NOWEB both have Plus features)
+WHATSAPP_DEFAULT_ENGINE=WEBJS
+
+# URLs
+WAHA_BASE_URL=http://localhost/api
+
+# Logging
+WAHA_LOG_FORMAT=JSON
+WAHA_LOG_LEVEL=info
+
+# Storage
+WAHA_MEDIA_STORAGE=LOCAL
+WHATSAPP_FILES_FOLDER=/app/.media
+
+# Webhooks (optional)
+# WHATSAPP_HOOK_URL=http://webhook:3002/webhook
+```
+
+**Create `dashboard.env`:**
+```env
+# Security - MUST match waha-api's API key
+WAHA_API_KEY=your-secret-api-key-here
+
+# Dashboard authentication
+WAHA_DASHBOARD_USERNAME=admin
+WAHA_DASHBOARD_PASSWORD=your-dashboard-password
+
+# Swagger credentials (required even though disabled)
+WHATSAPP_SWAGGER_USERNAME=admin
+WHATSAPP_SWAGGER_PASSWORD=your-swagger-password
+
+# Enable only dashboard
+WAHA_DASHBOARD_ENABLED=true
+WHATSAPP_SWAGGER_ENABLED=false
+
+# Minimal configuration
+WHATSAPP_DEFAULT_ENGINE=WEBJS
+WAHA_LOG_LEVEL=warn
+```
+
+**Create `docker-compose.yaml`:**
+```yaml
+version: '3.8'
+
+networks:
+  waha-network:
+    driver: bridge
+
+services:
+  # Your WAHA Plus Fork - API with multimedia features
+  waha-api:
+    container_name: waha-api
+    restart: always
+    build:
+      context: ./waha
+      dockerfile: Dockerfile
+    platform: linux/amd64
+    dns:
+      - 1.1.1.1
+      - 8.8.8.8
+    logging:
+      driver: 'json-file'
+      options:
+        max-size: '100m'
+        max-file: '10'
+    volumes:
+      - './sessions:/app/.sessions'
+      - './media:/app/.media'
+    env_file:
+      - ./waha/.env.docker
+    depends_on:
+      - postgres
+    networks:
+      - waha-network
+
+  # Official WAHA - Dashboard UI only
+  waha-dashboard:
+    container_name: waha-dashboard
+    restart: always
+    image: devlikeapro/waha
+    platform: linux/amd64
+    env_file:
+      - ./dashboard.env
+    networks:
+      - waha-network
+    logging:
+      driver: 'json-file'
+      options:
+        max-size: '100m'
+        max-file: '10'
+
+  # Nginx Reverse Proxy
+  nginx:
+    container_name: waha-nginx
+    restart: always
+    image: nginx:alpine
+    ports:
+      - '80:80/tcp'
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+    depends_on:
+      - waha-api
+      - waha-dashboard
+    networks:
+      - waha-network
+    logging:
+      driver: 'json-file'
+      options:
+        max-size: '100m'
+        max-file: '10'
+
+  # PostgreSQL (optional - for session/media storage)
+  postgres:
+    image: postgres:15-alpine
+    restart: always
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: postgres
+    ports:
+      - "127.0.0.1:5432:5432"
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+    command:
+      - postgres
+      - "-c"
+      - "max_connections=3000"
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "100m"
+        max-file: "10"
+    networks:
+      - waha-network
+
+volumes:
+  pg_data: {}
+```
+
+#### 3. Deploy
+
+```bash
+# Build your WAHA Plus fork
+docker-compose build waha-api
+
+# Start all services
+docker-compose up -d
+
+# Check logs
+docker-compose logs -f waha-api
+docker-compose logs -f waha-dashboard
+docker-compose logs -f nginx
+```
+
+#### 4. Access Your Services
+
+- **Dashboard**: http://localhost/dashboard
+  - Username: `admin`
+  - Password: (from `dashboard.env`)
+
+- **API**: http://localhost/api/*
+  - Requires `X-Api-Key` header
+  - Full Plus features available!
+
+- **Swagger**: http://localhost/swagger
+  - Username: `admin`
+  - Password: (from `waha/.env.docker`)
+
+- **Health Check**: http://localhost/health
+
+### Example API Calls (Production)
+
+```bash
+# Set your API key
+export API_KEY="your-secret-api-key-here"
+
+# Send an image
+curl -X POST "http://localhost/api/sendImage" \
+  -H "Content-Type: application/json" \
+  -H "X-Api-Key: $API_KEY" \
+  -d '{
+    "session": "default",
+    "chatId": "1234567890@c.us",
+    "file": {
+      "url": "https://picsum.photos/200/300"
+    },
+    "caption": "Test from WAHA Plus"
+  }'
+```
+
+### Managing Services
+
+```bash
+# Stop all services
+docker-compose down
+
+# Rebuild after code changes
+docker-compose build waha-api
+docker-compose up -d
+
+# View logs
+docker-compose logs -f
+
+# Restart a specific service
+docker-compose restart waha-api
+```
+
+### Using PostgreSQL for Storage
+
+To use PostgreSQL for media and sessions, update `waha/.env.docker`:
+
+```env
+# Media storage
+WAHA_MEDIA_STORAGE=POSTGRESQL
+WAHA_MEDIA_POSTGRESQL_URL=postgres://postgres:postgres@postgres:5432/postgres?sslmode=disable
+
+# Session storage
+WHATSAPP_SESSIONS_POSTGRESQL_URL=postgres://postgres:postgres@postgres:5432/postgres?sslmode=disable
+```
+
+### Benefits of This Setup
+
+✅ **Plus Features** - Multimedia messaging without subscription
+✅ **Official Dashboard** - Polished UI from the official image
+✅ **Single Entry Point** - All traffic through port 80
+✅ **Scalable** - Easy to add more services or load balancing
+✅ **Isolated** - API and Dashboard run independently
+✅ **Production Ready** - Logging, restart policies, resource limits
+
 ## 🏗️ Implementation Details
 
 This fork implements multimedia messaging by:
