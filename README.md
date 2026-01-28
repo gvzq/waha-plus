@@ -1,18 +1,12 @@
-# WAHA Plus (Open Source Implementation)
+# WhatsApp HTTP API Plus (Open Source Implementation)
 
-<p align="center">
-  <img src="./logo.png" style='border-radius: 50%' width='150'/>
-</p>
+**WhatsApp HTTP API Plus** - REST API with **multimedia messaging** capabilities implemented in the Core edition!
 
-**WAHA Plus** - **W**hats**A**pp **H**TTP **A**PI (REST API) with **multimedia messaging** capabilities implemented in the Core edition!
-
-> **🎉 This is an open-source fork** that implements Plus features (multimedia messaging) in WAHA Core.
+> **🎉 This is an open-source fork** that implements Plus features (multimedia messaging) in the Core edition.
 >
 > **Original Project**: [devlikeapro/waha](https://github.com/devlikeapro/waha)
 >
 > **This Fork**: Adds multimedia messaging support (images, audio, video, files) without requiring a Plus subscription.
-
-[![Docker Pulls](https://img.shields.io/docker/pulls/devlikeapro/waha)](https://hub.docker.com/r/devlikeapro/waha)
 
 ## ✨ Implemented Plus Features
 
@@ -36,8 +30,6 @@ This fork implements the following multimedia messaging capabilities in the open
 ## 📚 Documentation
 
 - Original Documentation: [https://waha.devlike.pro/](https://waha.devlike.pro/)
-- Implementation Details: See [TODO-messages.md](../TODO-messages.md) for full implementation roadmap
-- Architecture: See [plan.md](../plan.md) for dual-service setup with nginx
 
 # Tables of Contents
 
@@ -184,7 +176,7 @@ curl -X POST "http://localhost:3000/api/sendImage" \
     "file": {
       "url": "https://picsum.photos/200/300"
     },
-    "caption": "Test image from WAHA Plus"
+    "caption": "Test image from WhatsApp HTTP API Plus"
   }'
 ```
 
@@ -261,7 +253,7 @@ curl -X POST "http://localhost:3000/api/sendImage" \
 
 For production use, you can run a **dual-service setup** that combines:
 - **Your fork** (waha-plus) → Handles API with multimedia features
-- **Official WAHA** → Provides the polished dashboard UI
+- **Official project** → Provides the polished dashboard UI
 - **Nginx** → Routes requests to the appropriate service
 
 This gives you Plus features for the API while using the official dashboard interface!
@@ -331,7 +323,7 @@ http {
 
         client_max_body_size 50M;
 
-        # API routes → Your WAHA Plus fork
+        # API routes → Your fork
         location /api/ {
             proxy_pass http://waha_api;
             proxy_set_header Host $host;
@@ -349,20 +341,20 @@ http {
             proxy_read_timeout 60s;
         }
 
-        # Swagger docs → Your WAHA Plus fork
+        # Swagger docs → Your fork
         location /swagger {
             proxy_pass http://waha_api;
             proxy_set_header Host $host;
             proxy_set_header X-Real-IP $remote_addr;
         }
 
-        # Health check → Your WAHA Plus fork
+        # Health check → Your fork
         location /health {
             proxy_pass http://waha_api;
             proxy_set_header Host $host;
         }
 
-        # WebSocket → Your WAHA Plus fork
+        # WebSocket → Your fork
         location /ws {
             proxy_pass http://waha_api;
             proxy_http_version 1.1;
@@ -371,7 +363,7 @@ http {
             proxy_set_header Host $host;
         }
 
-        # Dashboard → Official WAHA
+        # Dashboard → Official project
         location /dashboard {
             proxy_pass http://waha_dashboard;
             proxy_set_header Host $host;
@@ -449,7 +441,7 @@ networks:
     driver: bridge
 
 services:
-  # Your WAHA Plus Fork - API with multimedia features
+  # Your Fork - API with multimedia features
   waha-api:
     container_name: waha-api
     restart: always
@@ -475,7 +467,7 @@ services:
     networks:
       - waha-network
 
-  # Official WAHA - Dashboard UI only
+  # Official project - Dashboard UI only
   waha-dashboard:
     container_name: waha-dashboard
     restart: always
@@ -542,7 +534,7 @@ volumes:
 #### 3. Deploy
 
 ```bash
-# Build your WAHA Plus fork
+# Build your fork
 docker-compose build waha-api
 
 # Start all services
@@ -586,7 +578,7 @@ curl -X POST "http://localhost/api/sendImage" \
     "file": {
       "url": "https://picsum.photos/200/300"
     },
-    "caption": "Test from WAHA Plus"
+    "caption": "Test from WhatsApp HTTP API Plus"
   }'
 ```
 
@@ -639,8 +631,6 @@ This fork implements multimedia messaging by:
 4. **Batch Processing** - Added concurrent processing with configurable limits
 5. **Retry Logic** - Implemented exponential backoff for failed operations
 
-See [TODO-messages.md](../TODO-messages.md) for the complete implementation roadmap and technical details.
-
 # Development
 
 ## Start the project
@@ -677,7 +667,7 @@ docker build -t waha-plus .
 docker run -it --rm -p 3000:3000/tcp --name waha waha-plus
 ```
 
-## Key Changes from Original WAHA Core
+## Key Changes from Original Core
 
 - **Package Manager**: Migrated from yarn to pnpm 9.15.0
 - **Dockerfile**: Updated to use pnpm with `--shamefully-hoist` for Docker compatibility
@@ -698,13 +688,13 @@ curl -X POST "http://localhost:3000/api/sendImage" \
 
 ## Contributing
 
-This is a fork focused on implementing multimedia messaging in WAHA Core. For issues with the base WAHA functionality, please refer to the [original repository](https://github.com/devlikeapro/waha).
+This is a fork focused on implementing multimedia messaging in the Core edition. For issues with the base functionality, please refer to the [original repository](https://github.com/devlikeapro/waha).
 
 For multimedia feature improvements or bug fixes, feel free to open issues or pull requests on this fork.
 
 ## License
 
-Same as the original WAHA project. See LICENSE file for details.
+Same as the original project. See LICENSE file for details.
 
 ## Disclaimer
 
